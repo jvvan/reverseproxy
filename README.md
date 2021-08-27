@@ -6,6 +6,7 @@ Reverse Proxy API powered by Nginx.
 
 ```sh
 mkdir -p /etc/reverseproxy
+cd /etc/reverseproxy
 curl -Lo proxy.zip https://github.com/j122j/reverseproxy/releases/latest/download/proxy.zip
 unzip -o proxy.zip
 cp example.env .env
