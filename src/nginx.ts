@@ -1,3 +1,4 @@
+import Logger from "./logger";
 import { exec } from "./util";
 
 export default class Nginx {
@@ -6,7 +7,7 @@ export default class Nginx {
       await exec(`systemctl restart nginx`);
       return true;
     } catch (e) {
-      console.log(`Error while restarting nginx:\n`, e);
+      Logger.error(`Restarting Nginx:\n`, e);
       return false;
     }
   }

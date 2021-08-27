@@ -1,11 +1,11 @@
-import fs from "fs/promises";
-import path from "path/posix";
+import fs from "fs";
+import path from "path";
 import config from "./config";
 import Templates from "./templates";
 
 export default class Proxy {
   static async get() {
-    return (await fs.readdir(config.nginxSitesEnabled))
+    return (await fs.promises.readdir(config.nginxSitesEnabled))
       .filter((r) => r.startsWith("proxy-"))
       .map((r) => r.slice("proxy-".length));
   }
@@ -23,13 +23,13 @@ export default class Proxy {
       .replace(/<DOMAIN>/gi, domain)
       .replace(/<TARGET>/gi, target);
 
-    await fs.writeFile(proxyFilePath, template);
+    await fs.promises.writeFile(proxyFilePath, template);
   }
 
   static async delete(domain: string) {
     const proxyFilePath = Proxy.resolveProxyPath(domain);
 
-    await fs.unlink(proxyFilePath).catch(() => {});
+    await fs.promises.unlink(proxyFilePath).catch(() => {});
     return true;
   }
 
