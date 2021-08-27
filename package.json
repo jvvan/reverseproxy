@@ -1,6 +1,6 @@
 {
   "name": "reverseproxy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Reverse proxy API with nginx backend",
   "main": "dist/index.js",
   "scripts": {
