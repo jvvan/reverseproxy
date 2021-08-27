@@ -1,0 +1,14 @@
+[Unit]
+Description=Reverse proxy API powered by Nginx
+After=nginx.service
+Wants=nginx.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/etc/reverseproxy
+ExecStart=/usr/bin/node .
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
