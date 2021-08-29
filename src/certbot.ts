@@ -5,7 +5,7 @@ export default class Certbot {
   static async create(domain: string) {
     try {
       const { stdout } = await exec(
-        `certbot certonly --noninteractive --agree-tos --keep-until-expiring -m ${config.letsencryptEmail} -d ${domain} --webroot -w ${config.letsencryptDir}`
+        `sudo certbot certonly --noninteractive --agree-tos --keep-until-expiring -m ${config.letsencryptEmail} -d ${domain} --webroot -w ${config.letsencryptDir}`
       );
 
       if (
@@ -22,7 +22,7 @@ export default class Certbot {
   }
   static async delete(domain: string) {
     try {
-      await exec(`certbot delete --cert-name ${domain}`);
+      await exec(`sudo certbot delete --cert-name ${domain}`);
       return true;
     } catch {
       return false;

@@ -38,4 +38,17 @@ export default class Proxy {
     const proxyFilePath = path.join(config.nginxSitesEnabled, proxyFile);
     return proxyFilePath;
   }
+
+  static resolveURL(url: string, ssl: boolean) {
+    return `http${ssl ? "s" : ""}://${url}`;
+  }
+
+  static checkTarget(target: string) {
+    try {
+      const url = new URL(target);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }
 }

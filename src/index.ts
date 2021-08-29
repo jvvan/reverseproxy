@@ -48,6 +48,12 @@ app.post("/proxies", async (req, res) => {
       statusCode: 400,
     });
   }
+  if (!Proxy.checkTarget(target)) {
+    return res.status(400).json({
+      error: "Invalid target",
+      statusCode: 400,
+    });
+  }
   const ssl = Boolean(req.body.ssl);
   if (ssl) {
     if (!(await Certbot.create(domain)))
@@ -56,32 +62,57 @@ app.post("/proxies", async (req, res) => {
         .json({ message: "Could not create SSL certificate", statusCode: 500 });
   }
 
-  await Proxy.create({
-    domain,
-    target,
-    ssl,
-  });
-  await Nginx.reload();
+  try {
+    await Proxy.create({
+      domain,
+      target,
+      ssl,
+    });
+  } catch {
+    return res.status(500).json({
+      error: "Could not create proxy",
+      statusCode: 500,
+    });
+  }
 
-  Logger.info(`Proxy created: http${ssl ? "s" : ""}://${domain} -> ${target}`);
-  return res.json({
+  Logger.info(`Proxy created: ${Proxy.resolveURL(domain, ssl)} -> ${target}`);
+  res.json({
     message: "Proxy created",
     statusCode: 200,
   });
+
+  if (await Nginx.test()) {
+    return await Nginx.reload();
+  } else {
+    Logger.info(
+      `Could not reload nginx, deleting proxy: ${Proxy.resolveURL(domain, ssl)}`
+    );
+    return await Proxy.delete(domain);
+  }
 });
 
 app.delete("/proxies/:domain", async (req, res) => {
   const domain = req.params.domain;
 
-  await Proxy.delete(domain);
-  await Certbot.delete(domain);
-  await Nginx.reload();
+  try {
+    await Proxy.delete(domain);
+  } catch {
+    return res.status(500).json({
+      error: "Could not delete proxy",
+      statusCode: 500,
+    });
+  }
 
   Logger.info(`Proxy deleted: ${domain}`);
   res.json({
     message: "Proxy deleted",
     statusCode: 200,
   });
+
+  if (await Nginx.test()) {
+    await Nginx.reload();
+  }
+  return;
 });
 
 app.use((req, res) => {
