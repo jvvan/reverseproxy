@@ -18,3 +18,125 @@ systemctl enable --now reverseproxy
 # Or if updating
 systemctl restart reverseproxy
 ```
+
+# How To Use
+
+## Authorization
+
+Authentication is performed with the `Authorization` HTTP header in the format `Authorization: AUTHORIZATION`
+
+## API
+
+### GET /
+
+Get the API version.
+
+Responses
+
+```json
+{
+  "version": "1.0.2",
+  "statusCode": 200
+}
+```
+
+### GET /proxies
+
+Get all proxies.
+
+Responses
+
+```json
+["example.com", "example.org"]
+```
+
+### POST /proxies
+
+Create a proxy with a domain and a target.
+If ssl is set to `true`, a SSL Certificate will be created using [Certbot](https://certbot.eff.org/).
+
+Body
+
+```json
+{
+  "domain": "example.com",
+  "target": "http://target.com:8080",
+  "ssl": true
+}
+```
+
+Responses
+
+```json
+{
+  "message": "Proxy created",
+  "statusCode": 200
+}
+```
+
+```json
+{
+  "error": "Invalid request",
+  "statusCode": 400
+}
+```
+
+```json
+{
+  "error": "Invalid target",
+  "statusCode": 400
+}
+```
+
+```json
+{
+  "message": "Could not create SSL certificate",
+  "statusCode": 500
+}
+```
+
+```json
+{
+  "error": "Could not create proxy",
+  "statusCode": 500
+}
+```
+
+### DELETE /proxies/:domain
+
+Delete the proxy with the domain.
+
+Responses
+
+```json
+{
+  "message": "Proxy deleted",
+  "statusCode": 200
+}
+```
+
+```json
+{
+  "error": "Could not delete proxy",
+  "statusCode": 500
+}
+```
+
+### Not Found Response
+
+```json
+{
+  "message": "METHOD /PATH not found",
+  "statusCode": 404
+}
+```
+
+### Internal Server Error
+
+```json
+{
+  "message": "Error Message",
+  "stack": "Error Stack",
+  "statusCode": 500
+}
+```
