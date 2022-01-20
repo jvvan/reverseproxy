@@ -1,4 +1,3 @@
-import "dotenv/config";
 import fs from "fs";
 import express from "express";
 import config from "./config";
@@ -101,6 +100,10 @@ app.delete("/proxies/:domain", async (req, res) => {
       error: "Could not delete proxy",
       statusCode: 500,
     });
+  }
+
+  if (!req.query.keepCertificate) {
+    await Certbot.delete(domain).catch(() => {});
   }
 
   Logger.info(`Proxy deleted: ${domain}`);

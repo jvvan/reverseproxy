@@ -1,13 +1,21 @@
 import fs from "fs";
 import path from "path";
 import config from "./config";
-import Templates from "./templates";
+import Templates, { IMetadata } from "./templates";
 
 export default class Proxy {
   static async get() {
-    return (await fs.promises.readdir(config.nginxSitesEnabled))
-      .filter((r) => r.startsWith("proxy-"))
-      .map((r) => r.slice("proxy-".length));
+    const files = await fs.promises
+      .readdir(config.nginxSitesEnabled)
+      .then((files) => files.filter((file) => file.startsWith("proxy-")));
+    const proxies = await Promise.all(
+      files.map(async (file) => {
+        return await Templates.getMetadata(
+          path.resolve(config.nginxSitesEnabled, file)
+        );
+      })
+    );
+    return proxies.filter(Boolean) as IMetadata[];
   }
   static async create({
     domain,
@@ -19,9 +27,14 @@ export default class Proxy {
     ssl: boolean;
   }) {
     const proxyFilePath = Proxy.resolveProxyPath(domain);
-    const template = Templates.get(ssl ? "proxy-ssl.conf" : "proxy.conf")!
-      .replace(/<DOMAIN>/gi, domain)
-      .replace(/<TARGET>/gi, target);
+    const templateName = ssl ? "proxy-ssl.conf" : "proxy.conf";
+    const template = Templates.build(templateName, {
+      version: "v1.0",
+      domain,
+      target,
+      ssl,
+      letsencryptDir: ssl ? config.letsencryptDir : undefined,
+    })!;
 
     await fs.promises.writeFile(proxyFilePath, template);
   }

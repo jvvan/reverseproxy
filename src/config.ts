@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 export default {
   address: process.env.ADDRESS || "0.0.0.0",
   port: parseInt(process.env.PORT as string) || 8080,

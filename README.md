@@ -2,9 +2,15 @@
 
 Reverse Proxy API powered by Nginx.
 
-# Instructions
+# Instructions (Fresh Ubuntu 20.04 Setup as Root)
+
+## Installing
 
 ```sh
+apt-get update && apt-get upgrade -y
+apt-get install -y nginx
+curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+apt-get install -y nodejs unzip certbot
 mkdir -p /etc/reverseproxy
 cd /etc/reverseproxy
 curl -Lo proxy.zip https://github.com/j122j/reverseproxy/releases/latest/download/proxy.zip
@@ -13,10 +19,25 @@ npm install
 cp example.env .env
 # Edit .env
 cp reverseproxy.service /etc/systemd/system/reverseproxy.service
-
 systemctl enable --now reverseproxy
-# Or if updating
+```
+
+## Updating
+
+```sh
+cd /etc/reverseproxy
+curl -Lo proxy.zip https://github.com/j122j/reverseproxy/releases/latest/download/proxy.zip
+unzip -o proxy.zip
+npm install
+cp reverseproxy.service /etc/systemd/system/reverseproxy.service
 systemctl restart reverseproxy
+```
+
+## Migrating old nginx configurations
+
+```sh
+cd /etc/reverseproxy
+node dist/migrate/addMetadata.js
 ```
 
 # How To Use
@@ -105,6 +126,8 @@ Responses
 ### DELETE /proxies/:domain
 
 Delete the proxy with the domain.
+
+Add `?keepCertificate=true` to not delete the SSL certificate.
 
 Responses
 
