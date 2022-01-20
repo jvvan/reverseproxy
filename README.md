@@ -68,7 +68,21 @@ Get all proxies.
 Responses
 
 ```json
-["example.com", "example.org"]
+[
+  {
+    "version": "v1.0",
+    "domain": "example.com",
+    "target": "http://target.com:8080",
+    "ssl": true,
+    "letsencryptDir": "/var/www/html"
+  },
+  {
+    "version": "v1.0",
+    "domain": "example.org",
+    "target": "http://target.com:8181",
+    "ssl": false
+  }
+]
 ```
 
 ### POST /proxies
