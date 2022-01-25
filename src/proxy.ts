@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import config from "./config";
-import Templates, { IMetadata } from "./templates";
+import Templates, { ProxyMetadata } from "./templates";
 
 export default class Proxy {
   static async get() {
@@ -10,12 +10,12 @@ export default class Proxy {
       .then((files) => files.filter((file) => file.startsWith("proxy-")));
     const proxies = await Promise.all(
       files.map(async (file) => {
-        return await Templates.getMetadata(
+        return await Templates.getMetadata<ProxyMetadata>(
           path.resolve(config.nginxSitesEnabled, file)
         );
       })
     );
-    return proxies.filter(Boolean) as IMetadata[];
+    return proxies.filter(Boolean) as ProxyMetadata[];
   }
   static async create({
     domain,

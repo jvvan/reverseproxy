@@ -21,31 +21,38 @@ export default class Templates {
     return this.templates.get(name);
   }
 
-  static build(template: string, data: IMetadata) {
+  static build<T>(template: string, data: T) {
     return (
       `# ${JSON.stringify(data)}\n` +
       this.templates
         .get(template)!
-        .replace(/<([a-zA-Z_\.]+)>/g, (match, key: keyof IMetadata) => {
+        .replace(/<([a-zA-Z_\.]+)>/g, (match, key: keyof T) => {
           return String(data[key]);
         })
     );
   }
 
-  static async getMetadata(path: string): Promise<IMetadata | null> {
+  static async getMetadata<T>(path: string): Promise<T | null> {
     const content = await fs.promises.readFile(path, "utf-8").catch(() => {});
     if (!content) return null;
     const firstLine = content.split("\n")[0];
     if (!firstLine.startsWith("# ")) return null;
     const metadata = JSON.parse(firstLine.slice(1));
-    return metadata as IMetadata;
+    return metadata as T;
   }
 }
 
-export interface IMetadata {
+export interface ProxyMetadata {
   version: string;
   domain: string;
   target: string;
   ssl: boolean;
   letsencryptDir?: string;
+}
+
+export interface StreamMetadata {
+  version: string;
+  name: string;
+  listen: string;
+  target: string;
 }

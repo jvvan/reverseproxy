@@ -8,6 +8,7 @@ import Certbot from "./certbot";
 import Proxy from "./proxy";
 import Templates from "./templates";
 import Logger from "./logger";
+import Stream from "./stream";
 
 const pkg = JSON.parse(
   fs.readFileSync(path.join(__dirname, "../package.json"), "utf-8")
@@ -32,6 +33,10 @@ app.get("/", (req, res) => {
     statusCode: 200,
   });
 });
+
+/*
+ * Proxy Routes
+ */
 
 app.get("/proxies", async (req, res) => {
   const proxies = await Proxy.get();
@@ -58,7 +63,7 @@ app.post("/proxies", async (req, res) => {
     if (!(await Certbot.create(domain)))
       return res
         .status(500)
-        .json({ message: "Could not create SSL certificate", statusCode: 500 });
+        .json({ error: "Could not create SSL certificate", statusCode: 500 });
   }
 
   try {
@@ -118,9 +123,102 @@ app.delete("/proxies/:domain", async (req, res) => {
   return;
 });
 
+/*
+ * Stream Routes
+ */
+
+app.get("/streams", async (req, res) => {
+  const streams = await Stream.get();
+  res.json(streams);
+});
+
+app.post("/streams", async (req, res) => {
+  const name = req.body.name;
+  const listen = req.body.listen;
+  const target = req.body.target;
+  if (!name || !listen || !target) {
+    return res.status(400).json({
+      error: "Invalid request",
+      statusCode: 400,
+    });
+  }
+  if (!Stream.checkName(name)) {
+    return res.status(400).json({
+      error: "Invalid name",
+      statusCode: 400,
+    });
+  }
+  if (!Stream.checkListen(listen)) {
+    return res.status(400).json({
+      error: "Invalid listen",
+      statusCode: 400,
+    });
+  }
+  if (!Stream.checkTarget(target)) {
+    return res.status(400).json({
+      error: "Invalid target",
+      statusCode: 400,
+    });
+  }
+
+  try {
+    await Stream.create({
+      name,
+      listen,
+      target,
+    });
+  } catch {
+    return res.status(500).json({
+      error: "Could not create stream",
+      statusCode: 500,
+    });
+  }
+
+  Logger.info(`Stream created: ${name} - ${listen} -> ${target}`);
+  res.json({
+    message: "Stream created",
+    statusCode: 200,
+  });
+
+  if (await Nginx.test()) {
+    return await Nginx.reload();
+  } else {
+    Logger.info(`Could not reload nginx, deleting stream: ${name}`);
+    return await Stream.delete(name);
+  }
+});
+
+app.delete("/streams/:name", async (req, res) => {
+  const name = req.params.name;
+
+  try {
+    await Stream.delete(name);
+  } catch {
+    return res.status(500).json({
+      error: "Could not delete stream",
+      statusCode: 500,
+    });
+  }
+
+  Logger.info(`Stream deleted: ${name}`);
+  res.json({
+    message: "Stream deleted",
+    statusCode: 200,
+  });
+
+  if (await Nginx.test()) {
+    return await Nginx.reload();
+  }
+  return;
+});
+
+/*
+ * Error Handling
+ */
+
 app.use((req, res) => {
   res.status(404).json({
-    message: `${req.method} ${req.path} not found`,
+    error: `${req.method} ${req.path} not found`,
     statusCode: 404,
   });
 });
@@ -128,7 +226,7 @@ app.use((req, res) => {
 app.use((error: any, req: any, res: any, next: any) => {
   Logger.error(error);
   res.status(500).json({
-    message: String(error),
+    error: String(error),
     stack: String(error.stack),
     statusCode: 500,
   });

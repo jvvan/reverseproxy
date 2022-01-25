@@ -8,9 +8,8 @@ Reverse Proxy API powered by Nginx.
 
 ```sh
 apt-get update && apt-get upgrade -y
-apt-get install -y nginx
 curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-apt-get install -y nodejs unzip certbot
+apt-get install -y nodejs unzip certbot nginx
 mkdir -p /etc/reverseproxy
 cd /etc/reverseproxy
 curl -Lo proxy.zip https://github.com/j122j/reverseproxy/releases/latest/download/proxy.zip
@@ -20,6 +19,18 @@ cp example.env .env
 # Edit .env
 cp reverseproxy.service /etc/systemd/system/reverseproxy.service
 systemctl enable --now reverseproxy
+```
+
+## Stream Support
+
+```sh
+mkdir -p /etc/nginx/streams
+cat >> /etc/nginx/nginx.conf << EOF
+stream {
+  include /etc/nginx/streams/*;
+}
+EOF
+nginx -t && systemctl restart nginx
 ```
 
 ## Updating
@@ -56,7 +67,7 @@ Responses
 
 ```json
 {
-  "version": "1.0.2",
+  "version": "1.2.0",
   "statusCode": 200
 }
 ```
@@ -125,7 +136,7 @@ Responses
 
 ```json
 {
-  "message": "Could not create SSL certificate",
+  "error": "Could not create SSL certificate",
   "statusCode": 500
 }
 ```
@@ -159,11 +170,105 @@ Responses
 }
 ```
 
+### GET /streams
+
+Get all streams.
+
+Responses
+
+```json
+[
+  {
+    "version": "v1.0",
+    "name": "example-stream",
+    "listen": "8080",
+    "target": "target.com:8080"
+  },
+  {
+    "version": "v1.0",
+    "name": "example-stream-too",
+    "listen": "127.0.0.1:8080 udp",
+    "target": "target.com:8181"
+  }
+]
+```
+
+### POST /streams
+
+Create a stream with a name, domain, and target.
+You can add udp after listen port (Example: `127.0.0.1:8080 udp`).
+Body
+
+```json
+{
+  "name": "example-stream",
+  "listen": "127.0.0.1:8080",
+  "target": "target.com:8080"
+}
+```
+
+Responses
+
+```json
+{
+  "message": "Stream created",
+  "statusCode": 200
+}
+```
+
+```json
+{
+  "error": "Invalid request",
+  "statusCode": 400
+}
+```
+
+```json
+{
+  "error": "Invalid name",
+  "statusCode": 400
+}
+```
+
+```json
+{
+  "error": "Invalid listen",
+  "statusCode": 400
+}
+```
+
+```json
+{
+  "error": "Could not create stream",
+  "statusCode": 500
+}
+```
+
+### DELETE /streams/:name
+
+Delete the stream with the name.
+
+Responses
+
+```json
+{
+  "message": "Stream deleted",
+  "statusCode": 200
+}
+```
+
+```json
+{
+  "error": "Could not delete stream",
+  "statusCode": 500
+}
+```
+
 ### Not Found Response
 
 ```json
 {
-  "message": "METHOD /PATH not found",
+  "error": "METHOD /PATH not found",
   "statusCode": 404
 }
 ```
@@ -172,7 +277,7 @@ Responses
 
 ```json
 {
-  "message": "Error Message",
+  "error": "Error Message",
   "stack": "Error Stack",
   "statusCode": 500
 }
