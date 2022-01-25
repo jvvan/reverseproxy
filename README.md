@@ -41,6 +41,7 @@ curl -Lo proxy.zip https://github.com/j122j/reverseproxy/releases/latest/downloa
 unzip -o proxy.zip
 npm install
 cp reverseproxy.service /etc/systemd/system/reverseproxy.service
+systemctl daemon-reload
 systemctl restart reverseproxy
 ```
 
