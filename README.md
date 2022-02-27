@@ -55,7 +55,7 @@ node dist/migrate/addMetadata.js
 ## Rebuilding nginx configurations
 
 ```sh
-node /etc/reverseproxy
+cd /etc/reverseproxy
 node dist/migrate/rebuild.js
 nginx -t && nginx -s reload
 ```
