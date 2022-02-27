@@ -52,6 +52,14 @@ cd /etc/reverseproxy
 node dist/migrate/addMetadata.js
 ```
 
+## Rebuilding nginx configurations
+
+```sh
+node /etc/reverseproxy
+node dist/migrate/rebuild.js
+nginx -t && nginx -s reload
+```
+
 # How To Use
 
 ## Authorization
@@ -149,6 +157,13 @@ Responses
 }
 ```
 
+```json
+{
+  "error": "Nginx configuration failed",
+  "statusCode": 500
+}
+```
+
 ### DELETE /proxies/:domain
 
 Delete the proxy with the domain.
@@ -241,6 +256,13 @@ Responses
 ```json
 {
   "error": "Could not create stream",
+  "statusCode": 500
+}
+```
+
+```json
+{
+  "error": "Nginx configuration failed",
   "statusCode": 500
 }
 ```

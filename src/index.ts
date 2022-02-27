@@ -79,20 +79,25 @@ app.post("/proxies", async (req, res) => {
     });
   }
 
+  if (!(await Nginx.test())) {
+    Logger.error(
+      `Could not reload nginx, deleting proxy: ${Proxy.resolveURL(domain, ssl)}`
+    );
+    await Proxy.delete(domain);
+
+    return res.status(500).json({
+      error: "Nginx configuration failed",
+      statusCode: 500,
+    });
+  }
+
   Logger.info(`Proxy created: ${Proxy.resolveURL(domain, ssl)} -> ${target}`);
   res.json({
     message: "Proxy created",
     statusCode: 200,
   });
 
-  if (await Nginx.test()) {
-    return await Nginx.reload();
-  } else {
-    Logger.info(
-      `Could not reload nginx, deleting proxy: ${Proxy.resolveURL(domain, ssl)}`
-    );
-    return await Proxy.delete(domain);
-  }
+  return await Nginx.reload();
 });
 
 app.delete("/proxies/:domain", async (req, res) => {
@@ -174,18 +179,23 @@ app.post("/streams", async (req, res) => {
     });
   }
 
+  if (!(await Nginx.test())) {
+    Logger.error(`Could not reload nginx, deleting stream: ${name}`);
+    await Stream.delete(name);
+
+    return res.status(500).json({
+      error: "Nginx configuration failed",
+      statusCode: 500,
+    });
+  }
+
   Logger.info(`Stream created: ${name} - ${listen} -> ${target}`);
   res.json({
     message: "Stream created",
     statusCode: 200,
   });
 
-  if (await Nginx.test()) {
-    return await Nginx.reload();
-  } else {
-    Logger.info(`Could not reload nginx, deleting stream: ${name}`);
-    return await Stream.delete(name);
-  }
+  return await Nginx.reload();
 });
 
 app.delete("/streams/:name", async (req, res) => {
